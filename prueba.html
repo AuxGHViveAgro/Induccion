@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corporate Quest - Quiz Cronometrado</title>
+    <!-- Carga de Tailwind CSS y la fuente Inter --><script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos generales */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        /* Estilo Contenedor Central */
+        #game-container {
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-width: 700px;
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden; 
+            min-height: 500px;
+            position: relative;
+        }
+
+        /* Títulos */
+        .app-title {
+            color: #3f51b5; /* Azul primario */
+            font-weight: 900;
+            font-size: 2.25rem;
+            letter-spacing: 1px;
+        }
+
+        /* HUD - Barra superior */
+        #game-info {
+            background-color: #3f51b5; 
+            color: #fff;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.1rem; 
+            font-weight: 700; 
+            border-bottom: 4px solid #1a237e; 
+        }
+        #score-display, #lives-display {
+            display: flex;
+            align-items: center;
+            gap: 8px; 
+        }
+        #lives-display .heart-icon {
+            font-size: 1.2rem; 
+            color: #ff5252;
+        }
+        
+        /* Botones de Opción - Estilo Quizizz */
+        #quiz-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            padding: 20px;
+        }
+        .option-button-quiz {
+            min-height: 90px;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            color: white;
+            font-weight: 700;
+            font-size: 1rem;
+            text-transform: uppercase;
+            transition: transform 0.1s ease, opacity 0.3s ease;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+        }
+        .option-button-quiz:not([disabled]):hover {
+            transform: scale(1.03);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Colores base Quizizz/Kahoot */
+        #quiz-options button:nth-child(1) { background-color: #00bcd4; } /* Cyan */
+        #quiz-options button:nth-child(2) { background-color: #ff9800; } /* Naranja */
+        #quiz-options button:nth-child(3) { background-color: #4caf50; } /* Verde */
+        #quiz-options button:nth-child(4) { background-color: #f44336; } /* Rojo */
+
+        .option-button-quiz.correct-feedback {
+             background-color: #388e3c !important; /* Verde oscuro */
+             transform: scale(1.05);
+             border: 3px solid #fff;
+        }
+        .option-button-quiz.incorrect-feedback {
+             background-color: #d32f2f !important; /* Rojo oscuro */
+             opacity: 0.8;
+        }
+        .option-button-quiz[disabled]:not(.correct-feedback):not(.incorrect-feedback) {
+            opacity: 0.4;
+        }
+
+        /* Estilos del Temporizador */
+        #timer-bar {
+            width: 100%;
+            height: 10px;
+            background-color: #e0e0e0;
+            position: relative;
+        }
+        #timer-fill {
+            height: 100%;
+            width: 100%;
+            background-color: #ffc107; /* Amarillo */
+            transition: width 1s linear, background-color 0.5s ease;
+        }
+
+        /* Modal de Feedback/Siguiente Pregunta */
+        #feedback-modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.95);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: opacity 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+        }
+        #feedback-modal.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+        #feedback-message {
+            font-size: 1.8rem;
+            font-weight: 900;
+            margin-bottom: 20px;
+        }
+        
+        /* Botones Generales */
+        .general-button {
+            background-color: #3f51b5;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 700;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.2s;
+        }
+        .general-button:hover {
+            background-color: #303f9f;
+        }
+        
+        /* Certificado */
+        .certificate-box {
+            background-color: #fffde7; 
+            border: 5px solid #d4af37; 
+            box-shadow: 0 0 15px rgba(0,0,0,0.4);
+            padding: 30px;
+            margin-top: 20px;
+            text-align: center;
+            max-width: 90%;
+            margin: 20px auto;
+            border-radius: 12px;
+        }
+        .certificate-title {
+            font-size: 2.5rem; 
+            color: #8b4513; 
+            border-bottom: 3px solid #d4af37; 
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        
+        <!-- Barra de Información y Título --><div id="game-info">
+            <div id="score-display">PUNTOS: <span class="text-yellow-300">0</span></div>
+            <div class="app-title">QUIZ CORPORATIVO</div>
+            <div id="lives-display">VIDAS: <span class="heart-icon">❤️</span><span class="heart-icon">❤️</span><span class="heart-icon">❤️</span></div>
+        </div>
+
+        <!-- Barra de Tiempo --><div id="timer-bar">
+            <div id="timer-fill"></div>
+        </div>
+
+        <!-- Área Principal del Quiz --><div id="quiz-area" class="p-6">
+            <div id="quiz-header" class="mb-6 text-center">
+                <p id="quiz-status" class="text-sm font-semibold text-gray-500 mb-2"></p>
+                <h3 id="quiz-question" class="text-2xl font-black text-gray-800"></h3>
+            </div>
+            
+            <div id="quiz-options">
+                <!-- Botones de opciones se insertan aquí -->
+            </div>
+        </div>
+        
+        <!-- Modal de Feedback (Aparece al responder o terminar el tiempo) --><div id="feedback-modal">
+            <p id="feedback-message" class="text-3xl"></p>
+            <button id="feedback-next-button" class="general-button py-3 px-8 text-xl mt-6 hidden">SIGUIENTE</button>
+        </div>
+
+        
+        <!-- Pantallas de Inicio/Fin de Juego --><div id="overlay" class="absolute inset-0 bg-white flex justify-center items-center z-50">
+            <div class="modal-content text-center w-11/12 max-w-md p-8 bg-white rounded-lg shadow-xl">
+                <h1 id="overlay-title" class="app-title mb-4"></h1>
+                
+                <!-- Input de Nombre --><div id="overlay-name-input" class="mb-4">
+                    <label for="userNameInput" class="block text-gray-700 font-bold mb-2">Ingresa tu Nombre Completo:</label>
+                    <input type="text" id="userNameInput" placeholder="Ej: Juan Pérez" class="w-full p-3 border-2 border-gray-300 focus:outline-none focus:border-blue-500 text-lg rounded-md">
+                </div>
+                
+                <p id="overlay-message" class="text-md text-gray-600 mb-8"></p>
+                
+                <!-- Salida del Certificado --><div id="certificate-output" class="mb-4 hidden"></div>
+
+                <!-- Dashboard de Resultados --><div id="admin-dashboard" class="hidden text-left mt-8">
+                    <h2 class="text-xl font-black text-gray-900 mb-4 border-b pb-2">📊 Dashboard de Resultados</h2>
+                    <div class="overflow-x-auto bg-gray-50 border p-2 rounded-lg max-h-64">
+                        <table id="results-table" class="min-w-full text-sm divide-y divide-gray-200">
+                            <!-- Los resultados se insertarán aquí --></table>
+                    </div>
+                </div>
+
+                <!-- Botones de Control --><div id="overlay-buttons" class="mt-6 space-y-3">
+                    <!-- Se utiliza addEventListener en JS en lugar de onclick en HTML --><button id="overlay-button" class="general-button w-full">INICIAR QUIZ</button>
+                    <button id="admin-button" class="general-button w-full bg-gray-500 hover:bg-gray-700 text-white">VER DASHBOARD DE RESULTADOS</button>
+                    <button id="back-to-game-button" class="general-button w-full bg-gray-400 hover:bg-gray-600 hidden">VOLVER</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, query, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Configuración e Inicialización de Firebase ---
+        setLogLevel('Debug');
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db = null;
+        let auth = null;
+        let userId = 'anonymous';
+        let isAuthReady = false;
+        
+        async function initializeFirebase() {
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                
+                userId = auth.currentUser?.uid || crypto.randomUUID();
+                isAuthReady = true;
+                console.log("Firebase y autenticación inicial listos. User ID:", userId);
+
+            } catch (error) {
+                console.error("Error al inicializar Firebase o autenticar:", error);
+                isAuthReady = true; 
+            }
+        }
+
+        // --- CONSTANTES Y ESTADO DEL JUEGO ---
+        const TIME_PER_QUESTION = 15; // Segundos por pregunta
+        let currentTimer = TIME_PER_QUESTION;
+        let timerInterval = null;
+
+        const questions = [
+            { id: 1, question: "¿Cuál de estos principios es parte de la Misión de la Compañía?", options: ["Ser el mayor competidor del mercado.", "Ofrecer soluciones innovadoras y sostenibles para nuestros clientes.", "Reducir costos a toda costa.", "Trabajar sin objetivos definidos."], correctAnswerIndex: 1 },
+            { id: 2, question: "Nuestra Visión corporativa describe...", options: ["El balance financiero de la semana pasada.", "El estado actual del inventario.", "Dónde queremos estar en los próximos 5 a 10 años.", "Los nombres de todos los fundadores."], correctAnswerIndex: 2 },
+            { id: 3, question: "¿Qué acción refleja el Valor de 'Integridad' en el día a día?", options: ["Evitar tareas difíciles.", "Cumplir con lo prometido y actuar con honestidad.", "Retrasar la entrega de informes.", "Asignar tareas extra a compañeros sin avisar."], correctAnswerIndex: 1 },
+            { id: 4, question: "Según la Política de Seguridad y Salud en el Trabajo (SST), ¿cuál es su responsabilidad principal?", options: ["Solo la del líder de SST.", "Reportar cualquier incidente o condición insegura inmediatamente.", "Usar su celular en zonas de maquinaria pesada.", "Ignorar las señales de evacuación."], correctAnswerIndex: 1 },
+            { id: 5, question: "El Código de Conducta aplica a:", options: ["Únicamente a los empleados nuevos.", "Solo al personal administrativo.", "Todos los colaboradores, proveedores y socios comerciales.", "A nadie, es opcional."], correctAnswerIndex: 2 },
+            { id: 6, question: "En caso de una alarma de incendio, ¿cuál es el primer paso correcto?", options: ["Regresar al escritorio por objetos personales.", "Dirigirse al punto de encuentro predefinido, siguiendo las rutas de evacuación.", "Esperar instrucciones en la cafetería.", "Correr sin dirección."], correctAnswerIndex: 1 },
+            { id: 7, question: "¿Cuál de las siguientes es una práctica de protección de datos obligatoria?", options: ["Usar '123456' como contraseña.", "Compartir documentos confidenciales por redes sociales.", "Bloquear la pantalla de su computador al levantarse.", "Abrir correos electrónicos sospechosos."], correctAnswerIndex: 2 },
+            { id: 8, question: "La 'Orientación al Cliente' se define como:", options: ["Atender solo a los clientes grandes.", "Superar las expectativas del cliente en cada interacción.", "Responder llamadas solo si es urgente.", "Mantener una distancia formal y fría."], correctAnswerIndex: 1 },
+            { id: 9, question: "¿Cuál es el propósito de la Reinducción anual?", options: ["Cambiar de cargo obligatoriamente.", "Refrescar y actualizar el conocimiento sobre políticas, procesos y objetivos de la compañía.", "Recibir un nuevo carné de identificación.", "Tomar vacaciones forzadas."], correctAnswerIndex: 1 },
+            { id: 10, question: "La Cultura Organizacional se construye a partir de:", options: ["Solo las decisiones del CEO.", "La suma de los hábitos, valores y comportamientos de todos los colaboradores.", "El color de las paredes de la oficina.", "Las reglas que nadie sigue."], correctAnswerIndex: 1 }
+        ];
+
+        // --- ELEMENTOS UI ---
+        const overlay = document.getElementById('overlay');
+        const feedbackModal = document.getElementById('feedback-modal');
+        const feedbackNextButton = document.getElementById('feedback-next-button');
+        const overlayButton = document.getElementById('overlay-button');
+        const adminButton = document.getElementById('admin-button');
+        const backToGameButton = document.getElementById('back-to-game-button');
+        const adminDashboardDiv = document.getElementById('admin-dashboard');
+        const certificateOutputDiv = document.getElementById('certificate-output');
+        const timerFill = document.getElementById('timer-fill');
+        const quizOptionsContainer = document.getElementById('quiz-options');
+
+        let gameState = 'START';
+        let currentQuestionIndex = 0;
+        let player = { score: 0, lives: 3, userName: '' };
+
+        // --- LÓGICA DEL TEMPORIZADOR ---
+
+        function startTimer() {
+            stopTimer(); // Asegura que no haya intervalos duplicados
+            currentTimer = TIME_PER_QUESTION;
+            updateTimerDisplay();
+
+            timerInterval = setInterval(tick, 1000);
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        function tick() {
+            currentTimer--;
+            updateTimerDisplay();
+
+            if (currentTimer <= 0) {
+                timeUp();
+            }
+        }
+        
+        function updateTimerDisplay() {
+            const percentage = (currentTimer / TIME_PER_QUESTION) * 100;
+            timerFill.style.width = `${percentage}%`;
+
+            if (percentage < 30) {
+                timerFill.style.backgroundColor = '#d32f2f'; // Rojo para bajo tiempo
+            } else if (percentage < 60) {
+                timerFill.style.backgroundColor = '#ffc107'; // Amarillo para advertencia
+            } else {
+                timerFill.style.backgroundColor = '#4caf50'; // Verde
+            }
+        }
+
+        function timeUp() {
+            stopTimer();
+            // Deshabilitar botones para evitar respuestas tardías
+            quizOptionsContainer.querySelectorAll('button').forEach(btn => btn.disabled = true);
+
+            // Perder vida y mostrar feedback de tiempo agotado
+            player.lives--;
+            updateInfoDisplay();
+
+            showFeedback(false, '¡TIEMPO AGOTADO! Perdiste 1 vida.');
+        }
+
+
+        // --- LÓGICA DEL JUEGO PRINCIPAL ---
+
+        function initGame() {
+            player.score = 0;
+            player.lives = 3;
+            currentQuestionIndex = 0;
+            
+            updateInfoDisplay();
+            showOverlay('START');
+            gameState = 'START';
+            stopTimer();
+        }
+
+        function startGame() {
+            const nameInput = document.getElementById('userNameInput');
+            const userName = nameInput.value.trim();
+
+            if (userName.length < 3) {
+                console.error("Por favor, ingresa tu nombre completo para iniciar el Quiz.");
+                return;
+            }
+            
+            player.userName = userName;
+            gameState = 'PLAYING';
+            hideOverlay();
+            document.getElementById('overlay-name-input').classList.add('hidden');
+            
+            showQuizQuestion(currentQuestionIndex);
+        }
+        
+        function handleOverlayButtonClick() {
+            if (!adminDashboardDiv.classList.contains('hidden')) {
+                hideAdminDashboard();
+                if (gameState === 'RESULTS' || gameState === 'GAME_OVER') {
+                    showOverlay(gameState, document.getElementById('overlay-message').textContent, document.getElementById('overlay-title').textContent, player.score);
+                } else {
+                    resetGame();
+                }
+            } else if (gameState === 'START') {
+                startGame();
+            } else {
+                resetGame();
+            }
+        }
+
+
+        function updateInfoDisplay() {
+            document.getElementById('score-display').querySelector('span').textContent = player.score;
+            const heartsContainer = document.getElementById('lives-display');
+            heartsContainer.innerHTML = 'VIDAS: ' + '❤️'.repeat(player.lives) + '🖤'.repeat(3 - player.lives);
+        }
+
+        async function gameOver() {
+            stopTimer();
+            gameState = 'GAME_OVER';
+            await saveScoreToFirestore(player.score, 'GAME_OVER');
+            showOverlay('GAME_OVER', `PUNTAJE FINAL: ${player.score}/${questions.length}`);
+        }
+
+        async function winGame() {
+            stopTimer();
+            gameState = 'RESULTS';
+            await saveScoreToFirestore(player.score, 'COMPLETED');
+            const finalScore = player.score;
+            let message = "";
+            let title = "¡Misión Completada!";
+
+            if (finalScore === questions.length) {
+                message = "¡Felicidades! Lograste 10/10. Dominio total de la inducción.";
+            } else if (finalScore >= 8) {
+                message = `Excelente desempeño (${finalScore}/${questions.length}). ¡Estás listo!`;
+            } else {
+                message = `Misión Parcial (${finalScore}/${questions.length}). Repasa el material clave.`;
+            }
+
+            showOverlay('RESULTS', message, title, finalScore);
+        }
+
+        // --- LÓGICA DEL QUIZ ---
+
+        function showQuizQuestion(qIndex) {
+            if (qIndex >= questions.length) {
+                winGame();
+                return;
+            }
+
+            // Ocultar feedback si es visible
+            feedbackModal.classList.remove('visible');
+            
+            const qData = questions[qIndex];
+            document.getElementById('quiz-status').textContent = `PREGUNTA ${qIndex + 1} de ${questions.length}`;
+            document.getElementById('quiz-question').textContent = qData.question;
+            
+            quizOptionsContainer.innerHTML = '';
+
+            qData.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.className = 'option-button-quiz';
+                button.textContent = option;
+                button.onclick = () => checkAnswer(index, qIndex, button);
+                quizOptionsContainer.appendChild(button);
+            });
+
+            startTimer();
+        }
+
+        function checkAnswer(selectedIndex, qIndex, selectedButton) {
+            if (gameState !== 'PLAYING') return;
+            
+            stopTimer(); 
+            gameState = 'QUIZ_FEEDBACK'; 
+
+            const qData = questions[qIndex];
+            const isCorrect = selectedIndex === qData.correctAnswerIndex;
+            
+            // Deshabilitar y dar feedback visual
+            quizOptionsContainer.querySelectorAll('button').forEach((btn, index) => {
+                btn.disabled = true;
+                if (index === qData.correctAnswerIndex) {
+                    btn.classList.add('correct-feedback');
+                } else if (index === selectedIndex) {
+                    btn.classList.add('incorrect-feedback');
+                }
+            });
+
+            // Actualizar estado
+            if (isCorrect) {
+                player.score++;
+                showFeedback(true, '¡RESPUESTA CORRECTA! (+1 Punto)');
+            } else {
+                player.lives--;
+                updateInfoDisplay();
+
+                if (player.lives <= 0) {
+                    showFeedback(false, `¡INCORRECTO! GAME OVER.`);
+                    // El botón nextQuestion manejará el llamado a gameOver
+                } else {
+                    showFeedback(false, `¡INCORRECTO! Perdiste 1 vida.`);
+                }
+            }
+        }
+
+        function showFeedback(isCorrect, message) {
+            const feedbackMessageEl = document.getElementById('feedback-message');
+            
+            feedbackMessageEl.textContent = message;
+            feedbackMessageEl.style.color = isCorrect ? '#388e3c' : '#d32f2f'; 
+
+            feedbackNextButton.textContent = currentQuestionIndex < questions.length - 1 ? 'SIGUIENTE PREGUNTA' : 'FINALIZAR';
+            feedbackNextButton.classList.remove('hidden');
+            
+            feedbackModal.classList.add('visible');
+            
+            if (player.lives <= 0) {
+                 feedbackNextButton.textContent = 'VER RESULTADOS';
+            }
+        }
+        
+        function nextQuestion() {
+            if (player.lives <= 0) {
+                gameOver();
+                return;
+            }
+
+            currentQuestionIndex++;
+            gameState = 'PLAYING';
+            
+            if (currentQuestionIndex < questions.length) {
+                showQuizQuestion(currentQuestionIndex);
+            } else {
+                winGame();
+            }
+        }
+
+        // --- FIREBASE Y UI GENERAL ---
+        
+        async function saveScoreToFirestore(finalScore, status) {
+            if (!isAuthReady || !db) {
+                console.error("No se pudo guardar el puntaje: Firebase no está initialized o autenticado.");
+                return;
+            }
+            
+            try {
+                const scoreData = {
+                    userName: player.userName,
+                    score: finalScore,
+                    maxScore: questions.length,
+                    status: status, 
+                    timestamp: new Date().toISOString(),
+                    userId: userId,
+                    appId: appId
+                };
+
+                const scoresCollection = collection(db, `artifacts/${appId}/public/data/induction_scores`);
+                await addDoc(scoresCollection, scoreData);
+                console.log("Puntaje guardado exitosamente en Firestore.");
+            } catch (error) {
+                console.error("Error al guardar el puntaje en Firestore:", error);
+            }
+        }
+
+        function showCertificate(score, maxScore, userName) {
+            const date = new Date().toLocaleDateString('es-CO');
+            const percentage = Math.round((score / maxScore) * 100);
+            
+            const certificateHtml = `
+                <div class="certificate-box">
+                    <p class="text-xs font-bold text-gray-600 mb-1">CERTIFICADO DE INDUCCIÓN</p>
+                    <h3 class="certificate-title">QUIZ CORPORATIVO</h3>
+                    
+                    <p class="text-lg text-gray-700 mb-2">Otorgado a:</p>
+                    <p class="text-3xl font-black text-gray-900">${userName}</p>
+                    
+                    <p class="text-xl font-bold text-gray-700 mt-4 mb-2">Por completar la Inducción con una Nota de:</p>
+                    
+                    <div class="inline-block p-4 border-2 border-green-600 bg-green-50 rounded-xl">
+                        <p class="text-4xl font-black text-green-900">${score}/${maxScore} (${percentage}%)</p>
+                    </div>
+
+                    <p class="text-sm text-gray-500 mt-4">Fecha: ${date}</p>
+                </div>
+            `;
+            certificateOutputDiv.innerHTML = certificateHtml;
+            certificateOutputDiv.classList.remove('hidden');
+        }
+
+        async function loadAdminDashboard() {
+            if (!isAuthReady || !db) {
+                adminDashboardDiv.innerHTML = '<p class="text-red-500 font-bold">Error: La base de datos no está lista. Inténtalo de nuevo.</p>';
+                return;
+            }
+            
+            adminDashboardDiv.classList.remove('hidden');
+            certificateOutputDiv.classList.add('hidden');
+            overlayButton.classList.add('hidden');
+            adminButton.classList.add('hidden');
+            backToGameButton.classList.remove('hidden');
+            
+            const tableContainer = document.getElementById('results-table');
+            tableContainer.innerHTML = '<thead><tr class="bg-gray-100"><th class="px-4 py-2 border text-left">Nombre</th><th class="px-4 py-2 border text-left">Nota (1-10)</th><th class="px-4 py-2 border text-left">Estado</th><th class="px-4 py-2 border text-left">Fecha</th></tr></thead><tbody><tr><td colspan="4" class="text-center py-4">Cargando resultados...</td></tr></tbody>';
+
+            try {
+                const scoresCollectionRef = collection(db, `artifacts/${appId}/public/data/induction_scores`);
+                const q = query(scoresCollectionRef);
+                const querySnapshot = await getDocs(q);
+
+                let scores = [];
+                querySnapshot.forEach((doc) => {
+                    scores.push(doc.data());
+                });
+
+                // Ordenar en JavaScript
+                scores.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                
+                let tableBody = '<tbody>';
+                if (scores.length === 0) {
+                    tableBody += '<tr><td colspan="4" class="text-center py-4 text-gray-500">Aún no hay resultados registrados.</td></tr>';
+                } else {
+                    scores.forEach(score => {
+                        const date = new Date(score.timestamp).toLocaleDateString('es-CO') + ' ' + new Date(score.timestamp).toLocaleTimeString('es-CO');
+                        const scoreDisplay = `${score.score}/${score.maxScore}`;
+                        const statusClass = score.status === 'COMPLETED' ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold';
+                        
+                        tableBody += `
+                            <tr>
+                                <td class="px-4 py-2 border">${score.userName}</td>
+                                <td class="px-4 py-2 border">${scoreDisplay}</td>
+                                <td class="px-4 py-2 border"><span class="${statusClass}">${score.status === 'COMPLETED' ? 'Completado' : 'GAME OVER'}</span></td>
+                                <td class="px-4 py-2 border">${date}</td>
+                            </tr>
+                        `;
+                    });
+                }
+                tableBody += '</tbody>';
+                tableContainer.innerHTML = '<thead><tr class="bg-gray-200"><th class="px-4 py-2 border text-left">Nombre</th><th class="px-4 py-2 border text-left">Nota (1-10)</th><th class="px-4 py-2 border text-left">Estado</th><th class="px-4 py-2 border text-left">Fecha</th></tr></thead>' + tableBody;
+
+            } catch (error) {
+                console.error("Error al cargar el dashboard:", error);
+                adminDashboardDiv.innerHTML = `<p class="text-red-500 font-bold">Error al cargar los resultados: ${error.message}</p>`;
+            }
+        }
+        
+        function hideAdminDashboard() {
+            adminDashboardDiv.classList.add('hidden');
+            certificateOutputDiv.classList.remove('hidden');
+            overlayButton.classList.remove('hidden');
+            adminButton.classList.remove('hidden');
+            backToGameButton.classList.add('hidden');
+        }
+
+        function showOverlay(state, message = '', title = '', finalScore = 0) {
+            overlay.style.display = 'flex';
+            const titleEl = document.getElementById('overlay-title');
+            const messageEl = document.getElementById('overlay-message');
+            const nameInputDiv = document.getElementById('overlay-name-input');
+
+            // Limpiar y ocultar elementos de otras vistas
+            certificateOutputDiv.classList.add('hidden');
+            adminDashboardDiv.classList.add('hidden');
+            nameInputDiv.classList.add('hidden');
+            adminButton.classList.add('hidden');
+            backToGameButton.classList.add('hidden');
+            overlayButton.classList.remove('hidden');
+            feedbackModal.classList.remove('visible');
+
+            if (state === 'START') {
+                titleEl.textContent = 'QUIZ DE INDUCCIÓN CORPORATIVA';
+                messageEl.textContent = `Bienvenido. Responde 10 preguntas. Tienes ${TIME_PER_QUESTION} segundos por pregunta. ¡Una respuesta incorrecta te costará una vida!`;
+                overlayButton.textContent = 'INICIAR QUIZ';
+                nameInputDiv.classList.remove('hidden'); 
+                
+            } else if (state === 'GAME_OVER') {
+                titleEl.textContent = '¡FIN DEL JUEGO!';
+                titleEl.classList.add('app-title');
+                messageEl.textContent = message + '. La misión falló. Vuelve a intentarlo.';
+                overlayButton.textContent = 'REINTENTAR';
+                adminButton.classList.remove('hidden'); 
+                
+            } else if (state === 'RESULTS') {
+                titleEl.textContent = title;
+                titleEl.classList.remove('app-title');
+                titleEl.classList.add('text-green-600');
+                messageEl.textContent = message;
+                overlayButton.textContent = 'REINICIAR JUEGO';
+                
+                showCertificate(finalScore, questions.length, player.userName);
+                adminButton.textContent = 'VER DASHBOARD DE RESULTADOS';
+                adminButton.classList.remove('hidden'); 
+            }
+        }
+
+        function hideOverlay() {
+            overlay.style.display = 'none';
+        }
+
+        function resetGame() {
+            const storedUserName = player.userName;
+            initGame();
+            if (storedUserName) {
+                document.getElementById('userNameInput').value = storedUserName;
+            }
+            showOverlay('START');
+        }
+
+        // --- LISTENERS DE BOTONES ---
+        overlayButton.addEventListener('click', handleOverlayButtonClick);
+        feedbackNextButton.addEventListener('click', nextQuestion);
+        adminButton.addEventListener('click', loadAdminDashboard);
+        backToGameButton.addEventListener('click', hideAdminDashboard);
+
+
+        // Iniciar la inicialización de Firebase y luego el juego
+        window.onload = async () => {
+            await initializeFirebase();
+            initGame();
+        };
+        
+    </script>
+</body>
+</html>
